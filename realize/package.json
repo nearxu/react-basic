@@ -1,0 +1,13 @@
+{
+  "name": "realize",
+  "version": "1.0.0",
+  "description": "基于 react15 实现源码功能",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
