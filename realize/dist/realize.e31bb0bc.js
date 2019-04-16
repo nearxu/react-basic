@@ -117,7 +117,249 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"react/component.js":[function(require,module,exports) {
+})({"react-dom/dom.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setAttribute = setAttribute;
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function setAttribute(dom, name, value) {
+  if (name === 'classname') {
+    name = 'class';
+  }
+
+  if (/on\w+/.test(name)) {
+    // event
+    name = name.toLowerCase();
+    dom[name] = value || '';
+  } else if (name === 'style') {
+    if (!value || typeof value === 'string') {
+      dom.style.cssText = value || '';
+    } else if (value || _typeof(value) === 'object') {
+      for (var k in value) {
+        dom.style[k] = typeof value[k] === 'number' ? value[k] + 'px' : value[k];
+      }
+    }
+  } else {
+    // simple attrs
+    if (name in dom) {
+      dom[name] = value;
+    }
+
+    if (value) {
+      dom.setAttribute(name, value);
+    } else {
+      dom.removeAttribute(name);
+    }
+  }
+}
+},{}],"react-dom/diff.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.diff = diff;
+exports.renderComponent = renderComponent;
+
+var _react = require("../react");
+
+var _dom = require("./dom");
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function diff(dom, vnode, container) {
+  var result = diffNode(dom, vnode); // dom
+
+  if (container && vnode.parentNode !== container) {
+    container.appendChild(result);
+  }
+
+  return result;
+}
+
+function diffNode(dom, vnode) {
+  var copyDom = dom;
+  if (vnode === undefined || vnode === null || typeof vnode === 'boolean') return;
+  if (typeof vnode == 'number') vnode = String(vnode);
+
+  if (typeof vnode === 'string') {
+    // text
+    if (dom && dom.nodeType === 3) {
+      if (dom.textContent !== vnode) {
+        dom.textContent = vnode; // just repleceWith 
+      }
+    } else {
+      copyDom = document.createTextNode(vnode);
+
+      if (dom && dom.parentNode) {
+        dom.parentNode.replaceChild(copyDom, dom);
+      }
+    }
+
+    return copyDom;
+  }
+
+  if (typeof vnode.tag === 'function') {
+    return diffComponent(dom, vnode);
+  }
+
+  if (!dom) {
+    copyDom = document.createElement(vnode.tag);
+  }
+
+  if (vnode.children && vnode.children.length > 0) {
+    diffChildren(copyDom, vnode.children);
+  }
+
+  diffAttribute(copyDom, vnode);
+  return copyDom;
+}
+
+function diffChildren(dom, virChild) {
+  var children = [];
+  var keyed = {}; // dom and virtual diff
+
+  if (dom.childNodes) {
+    for (var _i = 0, _Object$entries = Object.entries(dom.childNodes); _i < _Object$entries.length; _i++) {
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+          k = _Object$entries$_i[0],
+          v = _Object$entries$_i[1];
+
+      // lost child id ,dont diff 
+      if (v && v.key) {
+        keyed[v.key] = v;
+      } else {
+        children.push(v);
+      }
+    }
+  } // first render
+
+
+  if (virChild && virChild.length > 0) {
+    // so bady solution code
+    for (var i = 0; i < virChild.length; i++) {
+      var vchild = virChild[i];
+      var child = void 0;
+      child = diffNode(child, vchild);
+
+      if (child) {
+        dom.appendChild(child);
+      }
+    }
+  }
+}
+
+function diffAttribute(dom, vnode) {
+  var now = {};
+  var virAttr = vnode.attrs; // for(let i=0;i<dom.attributes.length;i++){
+  //   const attr = dom.attributes[i];
+  //   now[attr.name] = attr.value;
+  // }
+
+  for (var _i2 = 0, _Object$entries2 = Object.entries(dom.attributes); _i2 < _Object$entries2.length; _i2++) {
+    var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
+        _k2 = _Object$entries2$_i[0],
+        v = _Object$entries2$_i[1];
+
+    now[_k2] = v;
+  } // remove old diff new attr
+
+
+  for (var k in now) {
+    if (!(k in virAttr)) {
+      (0, _dom.setAttribute)(dom, k, undefined);
+    }
+  }
+
+  for (var _k in virAttr) {
+    if (now[_k] !== virAttr[_k]) {
+      (0, _dom.setAttribute)(dom, _k, virAttr[_k]);
+    }
+  }
+}
+
+function diffComponent(dom, vnode) {
+  var c = dom && dom._component;
+  var oldDom = dom;
+
+  if (c && c.constructor === vnode.tag) {
+    // no component change
+    setComponentProps(c, vnode.attrs); // check props
+
+    dom = c.base;
+  } else {
+    if (c) {
+      oldDom = null;
+    }
+
+    c = createComponent(vnode.tag, vnode.attrs);
+    setComponentProps(c, vnode.attrs);
+    dom = c.base;
+  }
+
+  return dom;
+}
+
+function createComponent(component, props) {
+  var instance;
+
+  if (component.prototype && component.prototype.render) {
+    instance = new component(props);
+  } else {
+    instance = new _react.Component(props);
+    instance.constructor = component;
+
+    instance.render = function () {
+      return this.constructor(props);
+    };
+  }
+
+  return instance;
+}
+
+function setComponentProps(component, props) {
+  //  component.base保存的是组件的dom对象
+  if (!component.base) {
+    if (component.componentWillMount) component.componentWillMount();
+  } else if (component.componentWillReceiveProps) {
+    component.componentWillReceiveProps(props);
+  }
+
+  component.props = props;
+  renderComponent(component);
+}
+
+function renderComponent(component) {
+  var base;
+  var renderer = component.render();
+
+  if (component.base && component.componentWillUpdate) {
+    component.componentWillUpdate();
+  }
+
+  base = diffNode(component.base, renderer);
+
+  if (component.base) {
+    if (component.componentDidUpdate) component.componentDidUpdate();
+  } else if (component.componentDidMount) {
+    component.componentDidMount();
+  }
+
+  component.base = base;
+  base._component = component;
+}
+},{"../react":"react/index.js","./dom":"react-dom/dom.js"}],"react/component.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -125,19 +367,40 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _diff = require("../react-dom/diff");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Component = function Component() {
-  var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-  _classCallCheck(this, Component);
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-  this.state = {};
-  this.props = props;
-};
+var Component =
+/*#__PURE__*/
+function () {
+  function Component() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck(this, Component);
+
+    this.state = {};
+    this.props = props;
+  } // render
+
+
+  _createClass(Component, [{
+    key: "setState",
+    value: function setState(stateChange) {
+      Object.assign(this.state, stateChange);
+      (0, _diff.renderComponent)(this);
+    }
+  }]);
+
+  return Component;
+}();
 
 exports.default = Component;
-},{}],"react/createElement.js":[function(require,module,exports) {
+},{"../react-dom/diff":"react-dom/diff.js"}],"react/createElement.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -178,114 +441,21 @@ var _default = {
   createElement: _createElement.createElement
 };
 exports.default = _default;
-},{"./component":"react/component.js","./createElement":"react/createElement.js"}],"react-dom/diff.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.diff = diff;
-
-var _react = require("../react");
-
-function diff(dom, vnode, container) {
-  var result = diffNode(dom, vnode);
-
-  if (container && vnode.parentNode !== container) {
-    container.appendChild(result);
-  }
-
-  return result;
-}
-
-function diffNode(dom, vnode) {
-  var copyDom = dom;
-  if (vnode === undefined || vnode === null || typeof vnode === 'boolean') return;
-  if (typeof vnode == 'number') vnode = String(vnode);
-
-  if (typeof vnode === 'string') {
-    // text
-    if (dom && dom.nodeType === 3) {
-      if (dom.textContent !== vnode) {
-        dom.textContent = vnode; // just repleceWith 
-      }
-    } else {
-      copyDom = document.createTextNode(vnode);
-
-      if (dom && dom.parentNode) {
-        dom.parentNode.replaceChild(copyDom, dom);
-      }
-    }
-
-    return copyDom;
-  }
-
-  if (typeof vnode.tag === 'function') {
-    return diffComponent(dom, vnode);
-  }
-}
-
-function diffComponent(dom, vnode) {
-  var c = dom && dom._component;
-  var oldDom = dom;
-
-  if (c && c.constructor === vnode.tag) {
-    // no component change
-    setComponentProps(c, vnode.attrs); // check props
-
-    dom = c.base;
-  } else {}
-
-  return dom;
-}
-
-function setComponentProps(component, props) {
-  //  component.base保存的是组件的dom对象
-  if (!component.base) {
-    if (component.componentWillMount) component.componentWillMount();
-  } else if (component.componentWillReceiveProps) {
-    component.componentWillReceiveProps(props);
-  }
-
-  component.props = props;
-  renderComponent(component);
-}
-
-function renderComponent(component) {
-  var base;
-  var renderer = component.render();
-
-  if (component.base && component.componentWillUpdate) {
-    component.componentWillUpdate();
-  }
-
-  base = diffNode(component.base, renderer);
-
-  if (component.base) {
-    if (component.componentDidUpdate) component.componentDidUpdate();
-  } else if (component.componentDidMount) {
-    component.componentDidMount();
-  }
-
-  component.base = base;
-  base._component = component;
-}
-
-function diffAttribute() {}
-},{"../react":"react/index.js"}],"react-dom/render.js":[function(require,module,exports) {
+},{"./component":"react/component.js","./createElement":"react/createElement.js"}],"react-dom/render.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.render = render;
+exports.renderComponent = renderComponent;
 
 var _diff = require("./diff");
 
 var _react = require("../react");
 
 function render(vnode, container, dom) {
-  return _render(vnode, container);
+  return (0, _diff.diff)(dom, vnode, container);
 }
 
 function _render(vnode, container) {
@@ -324,7 +494,7 @@ function _render(vnode, container) {
     });
   }
 
-  return container.appendChild(dom);
+  return dom;
 }
 
 function createComponent(component, props) {
@@ -341,6 +511,8 @@ function createComponent(component, props) {
     instance.render = function () {
       return this.constructor(props);
     };
+
+    instance.setState = function (state) {};
   }
 
   return instance;
@@ -428,23 +600,54 @@ var App =
 function (_React$Component) {
   _inherits(App, _React$Component);
 
-  function App() {
+  function App(props) {
+    var _this;
+
     _classCallCheck(this, App);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(App).apply(this, arguments));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
+    _this.state = {
+      count: 0
+    };
+    return _this;
   }
 
   _createClass(App, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      console.log('mount');
+    }
+  }, {
+    key: "componentWillMount",
+    value: function componentWillMount() {
+      console.log('will');
+    }
+  }, {
+    key: "add",
+    value: function add() {
+      this.setState({
+        count: this.state.count + 1
+      });
+    }
+  }, {
     key: "render",
     value: function render() {
-      return _react.default.createElement("h1", null, "Hello,World!");
+      var _this2 = this;
+
+      return _react.default.createElement("div", null, "Hello,World! ", this.props.name, _react.default.createElement("p", null, "count: ", this.state.count, " "), _react.default.createElement("button", {
+        onClick: function onClick() {
+          return _this2.add();
+        }
+      }, "add count"));
     }
   }]);
 
   return App;
 }(_react.default.Component);
 
-_reactDom.default.render(_react.default.createElement(App, null), document.getElementById('app'));
+_reactDom.default.render(_react.default.createElement(App, {
+  name: "tom"
+}), document.getElementById('app'));
 },{"./react":"react/index.js","./react-dom":"react-dom/index.js"}],"C:/Users/nearxu/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -473,7 +676,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55876" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59323" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

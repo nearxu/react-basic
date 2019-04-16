@@ -2,7 +2,7 @@ import { diff } from './diff'
 import { Component } from '../react'
 
 export function render(vnode, container, dom) {
-  return _render(vnode, container);
+  return diff(dom, vnode, container);
 }
 
 function _render(vnode, container) {
@@ -40,7 +40,7 @@ function _render(vnode, container) {
   if (vnode.children) {
     vnode.children.forEach(child => _render(child, dom));
   }
-  return container.appendChild(dom)
+  return dom;
 }
 
 function createComponent(component, props) {
@@ -54,6 +54,9 @@ function createComponent(component, props) {
     instance.constructor = component;
     instance.render = function () {
       return this.constructor(props);
+    }
+    instance.setState = function (state) {
+
     }
   }
   return instance;
@@ -71,7 +74,7 @@ function setComponentProps(component, props) {
 }
 
 // componentWillUpdate，componentDidUpdate，componentDidMount
-function renderComponent(component) {
+export function renderComponent(component) {
   let base;
   const renderer = component.render();
   if (component.base && component.componentWillUpdate) {
