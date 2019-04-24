@@ -157,6 +157,30 @@ function setAttribute(dom, name, value) {
     }
   }
 }
+},{}],"react-dom/utils.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.isSameNodeType = isSameNodeType;
+exports.removeNode = removeNode;
+
+function isSameNodeType(dom, vnode) {
+  if (typeof vnode === 'string' || typeof vnode === 'number') {
+    return dom && dom.nodeType === 3;
+  } else if (typeof vnode.tag === 'string') {
+    return dom && dom.nodeName.toLowerCase() === vnode.tag.toLowerCase();
+  } else {
+    return dom && dom._component.constructor === vnode.tag;
+  }
+}
+
+function removeNode(node) {
+  if (node && node.parentNode) {
+    node.parentNode.removeChild(node);
+  }
+}
 },{}],"react-dom/diff.js":[function(require,module,exports) {
 "use strict";
 
@@ -169,6 +193,8 @@ exports.renderComponent = renderComponent;
 var _react = require("../react");
 
 var _dom = require("./dom");
+
+var _utils = require("./utils");
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
@@ -224,7 +250,10 @@ function diffNode(dom, vnode) {
 
   diffAttribute(copyDom, vnode);
   return copyDom;
-}
+} // 对比子节点
+// 一个真实DOM和虚拟DOM对比，但是子节点是一个数组，它们可能改变了顺序，或者数量有所变化
+// 给节点设一个key值，重新渲染时对比key值相同的节点
+
 
 function diffChildren(dom, virChild) {
   var children = [];
@@ -243,19 +272,58 @@ function diffChildren(dom, virChild) {
         children.push(v);
       }
     }
-  } // first render
+  } // first render ,child value in the diffNode
 
 
   if (virChild && virChild.length > 0) {
-    // so bady solution code
+    var min = 0;
+    var childrenLen = children.length;
+
     for (var i = 0; i < virChild.length; i++) {
       var vchild = virChild[i];
-      var child = void 0;
-      child = diffNode(child, vchild);
+      var child = children[children.length - 1]; // everytime token foral child
+      // for(let j = 0 ;j<childrenLen;j++){
+      // }
 
-      if (child) {
-        dom.appendChild(child);
-      }
+      child = diffNode(child, vchild);
+      var f = dom.childNodes[i];
+
+      if (child && child !== dom && child !== f) {
+        if (!f) {
+          dom.appendChild(child);
+        }
+      } // just arr 
+      // let child;
+      // const key = vchild.key;
+      // if (key) {
+      //   if (keyed[key]) {
+      //     child = keyed[key];
+      //     keyed[key] = undefined
+      //   }
+      // } else if (min < childrenLen) {
+      //   for (let j = min; j < childrenLen; j++) {
+      //     let c = children[j];
+      //     if (c && isSameNodeType(c, vchild)) {
+      //       child = c;
+      //       children[j] = undefined;
+      //       if (j === childrenLen - 1) childrenLen--;
+      //       if (j === min) min++;
+      //       break;
+      //     }
+      //   }
+      // }
+      // child = diffNode(child, vchild);
+      // const f = dom.childNodes[i];
+      // if (child && child !== dom && child !== f) {
+      //   if (!f) {
+      //     dom.appendChild(child);
+      //   } else if (child === f.nextSibling) {
+      //     removeNode(f);
+      //   } else {
+      //     dom.insertBefore(child, f)
+      //   }
+      // }
+
     }
   }
 }
@@ -359,7 +427,7 @@ function renderComponent(component) {
   component.base = base;
   base._component = component;
 }
-},{"../react":"react/index.js","./dom":"react-dom/dom.js"}],"react/component.js":[function(require,module,exports) {
+},{"../react":"react/index.js","./dom":"react-dom/dom.js","./utils":"react-dom/utils.js"}],"react/component.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -607,7 +675,8 @@ function (_React$Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
     _this.state = {
-      count: 0
+      count: 0,
+      arr: []
     };
     return _this;
   }
@@ -630,15 +699,22 @@ function (_React$Component) {
       });
     }
   }, {
+    key: "addMember",
+    value: function addMember() {
+      this.setState({
+        arr: this.state.arr.concat(1)
+      });
+    }
+  }, {
     key: "render",
     value: function render() {
       var _this2 = this;
 
-      return _react.default.createElement("div", null, "Hello,World! ", this.props.name, _react.default.createElement("p", null, "count: ", this.state.count, " "), _react.default.createElement("button", {
+      return _react.default.createElement("div", null, _react.default.createElement("p", null, "Hello,World! ", this.props.name), _react.default.createElement("button", {
         onClick: function onClick() {
           return _this2.add();
         }
-      }, "add count"));
+      }, "add count ", this.state.count));
     }
   }]);
 
@@ -676,7 +752,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59323" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62437" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

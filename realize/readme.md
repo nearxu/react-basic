@@ -3,8 +3,7 @@
 
 virtual-dom diff 参考 https://github.com/nearxu/virtual-dom
 
-https://github.com/Tianlikai/TReact/tree/master/src
-test 文件实现简单render功能
+https://github.com/hujiulong/blog/issues/6
 
 ### some unknow
 

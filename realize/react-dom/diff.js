@@ -4,6 +4,7 @@
 
 import { Component } from '../react';
 import { setAttribute } from './dom';
+import { isSameNodeType, removeNode } from './utils';
 
 export function diff(dom, vnode, container) {
   const result = diffNode(dom, vnode); // dom
@@ -51,6 +52,9 @@ function diffNode(dom, vnode) {
   return copyDom;
 }
 
+// 对比子节点
+// 一个真实DOM和虚拟DOM对比，但是子节点是一个数组，它们可能改变了顺序，或者数量有所变化
+// 给节点设一个key值，重新渲染时对比key值相同的节点
 function diffChildren(dom, virChild) {
   const children = [];
   const keyed = {};
@@ -67,16 +71,58 @@ function diffChildren(dom, virChild) {
     }
   }
 
-  // first render
+  // first render ,child value in the diffNode
   if (virChild && virChild.length > 0) {
-    // so bady solution code
+    let min = 0;
+    let childrenLen = children.length;
     for (let i = 0; i < virChild.length; i++) {
       const vchild = virChild[i];
-      let child;
+      let child = children[children.length - 1];
+      // everytime token foral child
+      // for(let j = 0 ;j<childrenLen;j++){
+
+      // }
       child = diffNode(child, vchild);
-      if (child) {
-        dom.appendChild(child);
+      const f = dom.childNodes[i];
+      if (child && child !== dom && child !== f) {
+        if (!f) {
+          dom.appendChild(child);
+        }
       }
+
+
+      // just arr 
+      // let child;
+      // const key = vchild.key;
+      // if (key) {
+      //   if (keyed[key]) {
+      //     child = keyed[key];
+      //     keyed[key] = undefined
+      //   }
+      // } else if (min < childrenLen) {
+      //   for (let j = min; j < childrenLen; j++) {
+      //     let c = children[j];
+      //     if (c && isSameNodeType(c, vchild)) {
+      //       child = c;
+      //       children[j] = undefined;
+      //       if (j === childrenLen - 1) childrenLen--;
+      //       if (j === min) min++;
+      //       break;
+      //     }
+      //   }
+      // }
+      // child = diffNode(child, vchild);
+      // const f = dom.childNodes[i];
+
+      // if (child && child !== dom && child !== f) {
+      //   if (!f) {
+      //     dom.appendChild(child);
+      //   } else if (child === f.nextSibling) {
+      //     removeNode(f);
+      //   } else {
+      //     dom.insertBefore(child, f)
+      //   }
+      // }
     }
   }
 }
