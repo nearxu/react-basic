@@ -1,17 +1,16 @@
-import React from './react';
-import ReactDOM from './react-dom';
-
+import React from './react'
+import ReactDOM from './react-dom'
 
 class App extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       count: 0,
       arr: []
     }
   }
   componentDidMount() {
-    console.log('mount');
+    console.log('mount')
   }
   componentWillMount() {
     console.log('will')
@@ -23,15 +22,13 @@ class App extends React.Component {
     this.setState({ arr: this.state.arr.concat(1) })
   }
   render() {
-    return <div>
-      <p>Hello,World! {this.props.name}</p>
-      <button onClick={() => this.add()}>add count {this.state.count}</button>
-    </div>;
+    return (
+      <div>
+        <p>Hello,World!00000 {this.props.name}</p>
+        <button onClick={() => this.add()}>add count {this.state.count}</button>
+      </div>
+    )
   }
 }
 
-
-ReactDOM.render(
-  <App name='tom' />,
-  document.getElementById('app')
-)
+ReactDOM.render(<App name="tom" />, document.getElementById('app'))
