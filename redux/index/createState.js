@@ -1,4 +1,4 @@
-const createStore = function (initState) {
+const createStore = function (reducer, initState) {
   let state = initState;
   let listeners = [];
 
@@ -8,13 +8,19 @@ const createStore = function (initState) {
   }
 
   // v1 not dispatch
-  function changeState(newState) {
-    state = newState;
+  function changeState(action) {
+    state = reducer(state, action);
     /*通知*/
     for (let i = 0; i < listeners.length; i++) {
       const listener = listeners[i];
       listener();
     }
+  }
+
+  // v2
+  function dispatch(action) {
+    state = reducer(state, action);
+    listeners.forEach((listener) => listener());
   }
 
   function getState() {
@@ -25,5 +31,8 @@ const createStore = function (initState) {
     subscribe,
     changeState,
     getState,
+    dispatch,
   };
 };
+
+module.exports = createStore;

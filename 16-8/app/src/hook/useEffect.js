@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 // useEffect 代替 componentDidMount
 //  useEffect 取数？参数 [] 代表什么
@@ -34,10 +34,35 @@ const EffectApp = () => {
   );
 };
 
-export const AppEffectComponent = () => {
+const ReactLive = () => {
+  const [num, setNum] = useState(0);
+  useEffect(() => {
+    // 参数2 不变执行一次
+    console.log("componentDidMount");
+  }, []);
+
+  useEffect(() => {
+    // 参数2 数值变化执行
+    console.log("componentDidUpdate");
+  }, [num]);
+
+  useEffect(() => {
+    // 参数2 数值变化执行
+    return () => {
+      console.log("componentWillUnMount");
+    };
+  });
+
+  return <div onClick={() => setNum(num + 1)}>{num}</div>;
+};
+
+const AppEffectComponent = () => {
   return (
     <div>
       <EffectApp />
+      <ReactLive />
     </div>
   );
 };
+
+export default AppEffectComponent;
